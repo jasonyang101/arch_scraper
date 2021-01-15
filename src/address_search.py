@@ -2,8 +2,9 @@ import requests
 from pprint import pprint
 import urllib
 import constant
-# https://maps.googleapis.com/maps/api/place/findplacefromtext/json?input=Museum%20of%20Contemporary%20Art%20Australia&inputtype=textquery&fields=photos,formatted_address,name,rating,opening_hours,geometry&key=YOUR_API_KEY
 
+# sample URL
+# https://maps.googleapis.com/maps/api/place/findplacefromtext/json?input=Museum%20of%20Contemporary%20Art%20Australia&inputtype=textquery&fields=photos,formatted_address,name,rating,opening_hours,geometry&key=YOUR_API_KEY
 
 class AddressSearcher:
     constant.ADDR = 'formatted_address'
@@ -19,10 +20,13 @@ class AddressSearcher:
 
     def construct_url(self, search_string):
         url = [ 'https://maps.googleapis.com/maps/api/place/findplacefromtext/json?' ]
+
+        # &locationbias=circle:2000@47.6918452,-122.2226413
         params = {
             'input': urllib.parse.quote(search_string),
             'inputtype': 'textquery',
             'fields': 'formatted_address',
+            'locationbias': 'circle:100000@41.8781,-87.623177',
             'key': self.api_key
         }
         for param, param_val in params.items():
@@ -53,6 +57,10 @@ class AddressSearcher:
                 continue
             # pull the best candidate
             candidates = response_json['candidates']
+            # search the next candidates if it doesn't include the right answer
+            best_candidate, i = candidates[0], 1
+            while i < len(candidates) and 'IL' not in best_candidate:
+                best_candidate, i = candidates[i], i+1
             addr = candidates[0]['formatted_address']
             search_output[search] = addr
         return (search_output, failed_searches)
@@ -61,6 +69,6 @@ class AddressSearcher:
 
 
 # find_place_url = construct_url('Healthy Smiles of La Grange La Grange, IL 60525')
-# sample = "Healthy Smiles of La Grange La Grange, IL 60525"
+# sample = "A to Z Dental, LLC Cicero, IL"
 # address_search = AddressSearcher([sample])
-# address_search.run_searches()
+# print(address_search.run_searches())
