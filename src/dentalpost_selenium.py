@@ -46,7 +46,7 @@ class DentalPostScraper(object):
             options.add_argument("--window-size=1920,1200")
             self._driver = webdriver.Chrome(options=options, executable_path=constant.DRIVER_PATH)
         return self._driver
-# 'https://www.ihiredental.com/search?City=Chicago&State=IL&ctname=Dental%20Assistant&ct=253&loc=Chicago%2C%20IL&IsFromSerp=True&CareerTitleIds=253#!/search/c=&k=&loc=Chicago,%20IL&p=2&o=14&d=25&st=page&ct=253'
+
     def go_to_url(self, url):
         self._driver.get(url)
         sleep(10)

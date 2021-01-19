@@ -27,7 +27,7 @@ class IndeedWebScraper(object):
 
     def uses_driver(self):
         return False
-        
+
     def construct_base_url(self, role, location):
         role_str = "q="+urllib.parse.quote(role)
         loc_str = "l="+urllib.parse.quote(location)
