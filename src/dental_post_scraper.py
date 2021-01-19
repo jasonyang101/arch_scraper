@@ -100,8 +100,5 @@ class DentalPostScraper(object):
             all_infos.append(DentalPostSearchData(company_name, company_loc, search_string))
         return all_infos
 
-
-
-
-scraper = DentalPostScraper('Dental Associate', 'Chicago, IL')
-scraper.do_scrape()
+# scraper = DentalPostScraper('Dental Associate', 'Chicago, IL')
+# scraper.do_scrape()

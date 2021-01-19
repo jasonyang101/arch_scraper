@@ -1,4 +1,5 @@
 import indeed_scraper
+import dentalpost_selenium
 import address_search
 import constant
 import os
@@ -7,7 +8,9 @@ class ScrapeExecutor:
     constant.SEARCH_CITIES = ['Chicago, IL', 'Naperville, IL', 'Oak Lawn, IL', 'Des Plaines, IL']
     constant.SEARCH_ROLES = [ 'Dentist Associate', 'Registered Dental Hygienist',
                                 'Dental Office Manager', 'Dental Assistant', 'Dental Front Office']
-    constant.WEBSITES = {'indeed': indeed_scraper.IndeedWebScraper }
+    constant.WEBSITES = {
+        'indeed': indeed_scraper.IndeedWebScraper,
+        'dentalpost': dentalpost_selenium.DentalPostScraper }
     constant.results_path = '../results/output.csv'
 
     def  __init__(self, site):
@@ -21,22 +24,23 @@ class ScrapeExecutor:
             os.remove('../results/output.csv')
 
     def scrape(self):
+        scraper = constant.WEBSITES[self.site]()
         all_infos = set()
         for role in constant.SEARCH_ROLES:
             roles = set()
             for city in constant.SEARCH_CITIES:
-                scraper = constant.WEBSITES[self.site](role, city)
-                scraped_info = scraper.do_scrape()
+                scraped_info = scraper.do_scrape(role, city)
                 scraped_info = set(scraped_info)
                 roles = roles.union(scraped_info)
-                break
+                # break
             prev_length = len(all_infos)
             self.role_data[role] = roles
             all_infos = all_infos.union(roles)
             print("Total unique entries found for role: "+role, len(roles))
             print("Number of new unique elements found for role: "+role, len(all_infos)-prev_length)
-            break
-
+            # break
+        if scraper.uses_driver():
+            scraper.end_driver()
         for info in all_infos:
             print(info.search_string)
         print("Total number of unique elements found in the search: ", len(all_infos))
@@ -60,11 +64,9 @@ class ScrapeExecutor:
     def parse_formatted_address(self, addr):
         addr_split = addr.split(',')
         components = list(map(lambda s: s.strip(), addr_split))
-        # street=519 N Cass Ave Ste 401
         street = components[0]
         # split IL 60559 into [IL, 60559]
         state_zip = components[2].split(' ')
-        # city=Westmont
         city_state = components[1]+' '+state_zip[0]
         return [street, city_state, state_zip[1]]
 
@@ -92,11 +94,10 @@ class ScrapeExecutor:
     def execute(self):
         all_infos = self.scrape()
         address_dict = self.search_infos(all_infos)
-
         csv_output = self.get_csv_output(all_infos, address_dict)
         self.write_data(csv_output)
         self.after_run(csv_output)
 
 if __name__ == '__main__':
-    executor = ScrapeExecutor('indeed')
+    executor = ScrapeExecutor('dentalpost')
     all_infos = executor.execute()

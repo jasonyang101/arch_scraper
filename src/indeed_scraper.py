@@ -19,13 +19,15 @@ class IndeedWebScraper(object):
     constant.COMPANY_CLASS = 'company'
     constant.NUM_PER_PAGE = 10
 
-    def __init__(self, role, location):
-        print('starting a new scraper for indeed with role, location: ', role, location)
+    def __init__(self):
+        print('starting a new scraper for indeed')
         self.role = role
         self.location = location
-        self.base_url = self.construct_base_url(role,location)
         self.parser = website_parser_common.WebsiteParser()
 
+    def uses_driver(self):
+        return False
+        
     def construct_base_url(self, role, location):
         role_str = "q="+urllib.parse.quote(role)
         loc_str = "l="+urllib.parse.quote(location)
@@ -58,15 +60,16 @@ class IndeedWebScraper(object):
         return page_cards
 
     # add to the set until you're done
-    def do_scrape(self):
+    def do_scrape(self, role, location):
+        print("Beginning scrape for role", role, "location", location)
         finished, data = None, set()
-        url, iteration = self.base_url, 0
+        base_url, iteration = self.construct_base_url(role, location), 0
         fails, all_infos = 2, []
         while not finished:
             finished = True
             start_param = iteration*constant.NUM_PER_PAGE
             if start_param:
-                url = self.base_url+"&start="+str(start_param)
+                url = base_url+"&start="+str(start_param)
             page_cards = self.get_cards_per_page(url)
             new_info = self.parse_company_cards(page_cards)
             print('searching this url for new info: ', url)
@@ -87,13 +90,6 @@ class IndeedWebScraper(object):
                 finished = not finished
             sleep(random.randint(3,10))
         return all_infos
-
-    def scrape(self):
-        search_infos = []
-        infos = self.do_scrape()
-        for info in infos:
-            search_infos.append(IndeedSearchData(self.role, self.location, info))
-        return search_infos
 
 # url = "https://www.indeed.com/jobs?q=Dentist+Associate&l=Chicago%2C+IL"
 # web_scraper = IndeedWebScraper('Dental Associate','Chicago, IL')
