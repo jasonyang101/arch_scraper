@@ -2,6 +2,7 @@ from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 from selenium.common.exceptions import NoSuchElementException
 from selenium_driver import SeleniumCommon
+from website_parser_common import SearchData
 from time import sleep
 import urllib
 import constant
@@ -24,12 +25,6 @@ import constant
 # Front Office:
 # https://www.ihiredental.com/search?ct=0&d=25&loc=Schaumburg%2C%20IL#!/search/c=&k=&loc=Schaumburg,%20IL&p=1&o=14&d=25&st=new&ct=245
 
-class iHireSearchData:
-    def __init__(self, company_name, company_loc, search_string):
-        self.company_name = company_name
-        self.company_loc = company_loc
-        self.search_string = search_string
-
 
 class iHireScraper(object):
     constant.DRIVER_PATH = '/Users/jasonyang/Documents/personal/arch_dental/arch_scraper/chromedriver'
@@ -49,6 +44,9 @@ class iHireScraper(object):
         SeleniumCommon.go_to_url(self._driver, constant.LOGIN_URL)
         self.logged_in = self.perform_login()
 
+    def uses_driver(self):
+        return True
+
     def perform_login(self):
         success = True
         # has a single box for the login email. Need to submit that, then enter password
@@ -64,7 +62,7 @@ class iHireScraper(object):
             print("Failed to find the password page. Exiting login..")
             return success
         sleep(5)
-        success = SeleniumCommon.ensure_login_successful(self._driver, "//a[@class='dropdown-toggle communities']")
+        success, _ = SeleniumCommon.contains_element_xpath(self._driver, "//a[@class='dropdown-toggle communities']")
         login_msg = "Successfully logged into iHire" if success else "Failed to login to iHire"
         print(login_msg)
         return success
@@ -121,15 +119,13 @@ class iHireScraper(object):
         return list(infos)
 
     def parse_initial_button(self):
-        success = True
-        try:
-            submit = self._driver.find_element_by_xpath("//button[@id='end-button']").click()
-        except NoSuchElementException as e:
-            success = False
-        msg = "Found and clicked initial got it button" if success else "Unable to find the got it button (may be unnecessary)"
-        print(msg)
-        if success:
-            sleep(5)
+        success, elem = SeleniumCommon.contains_element_xpath(self._driver,"//button[@id='end-button']")
+        if not success:
+            print("Unable to find the got it button (may be unnecessary)")
+            return success
+        elem.click()
+        print("Clicked got it button")
+        sleep(5)
         return success
 
     def do_scrape(self, role, location):
@@ -139,10 +135,9 @@ class iHireScraper(object):
         if not self.logged_in:
             return []
 
-        output = []
         print('Starting scrape now')
         finished, page_num = False, 1
-        initial_button = False
+        initial_button, all_infos = False, []
         while not finished:
             url = self.construct_url(role, location, page_num)
             print()
@@ -158,24 +153,30 @@ class iHireScraper(object):
                 print("beginning parsing method #2:")
                 curr = self.parse_current_search_page_div(page_num)
             if not curr: break
-            output += curr
+            all_infos += curr
             page_num += 1
         print('finished with role, location:', role, location)
-        print('found this number of entries', len(output))
+        print('found this number of entries', len(all_infos))
+        output = [
+            SearchData(info[0], info[1], info[0]+' '+info[1])
+            for info in all_infos ]
+        print("adding these search strings to the set:")
+        for out in output:
+            print(out.search_string)
         return output
 
-scraper = iHireScraper()
-cities = ['Schaumburg, IL', 'Chicago, IL', 'Naperville, IL', 'Evanston, IL']
-roles = ['Dentist Associate', 'Registered Dental Hygienist', 'Dental Office Manager', 'Dental Assistant']
-final = set()
-for role in roles:
-    for city in cities:
-        output = scraper.do_scrape(role, city)
-        output_s = set(output)
-        final = final.union(output_s)
-print(len(final))
-for info in final:
-    print(info)
-
-scraper.do_scrape('Dentist Associate', 'Schaumburg, IL')
-SeleniumCommon.end_driver(scraper._driver)
+# scraper = iHireScraper()
+# cities = ['Schaumburg, IL', 'Chicago, IL', 'Naperville, IL', 'Evanston, IL']
+# roles = ['Dentist Associate', 'Registered Dental Hygienist', 'Dental Office Manager', 'Dental Assistant']
+# final = set()
+# for role in roles:
+#     for city in cities:
+#         output = scraper.do_scrape(role, city)
+#         output_s = set(output)
+#         final = final.union(output_s)
+# print(len(final))
+# for info in final:
+#     print(info)
+#
+# scraper.do_scrape('Dentist Associate', 'Schaumburg, IL')
+# SeleniumCommon.end_driver(scraper._driver)
