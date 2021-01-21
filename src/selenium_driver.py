@@ -22,10 +22,10 @@ class SeleniumCommon:
         driver.quit()
 
     @classmethod
-    def ensure_login_successful(cls, driver, x_path):
-        success = True
+    def contains_element_xpath(cls, driver, x_path):
+        success, elem = True, None
         try:
-            driver.find_element_by_xpath(x_path)
+            elem = driver.find_element_by_xpath(x_path)
         except NoSuchElementException as e:
             success = False
-        return success
+        return success, elem

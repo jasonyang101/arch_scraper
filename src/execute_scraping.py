@@ -1,22 +1,26 @@
+from selenium_driver import SeleniumCommon
 import indeed_scraper
 import dentalpost_selenium
+import ihire_selenium
 import address_search
 import constant
+import sys
 import os
 
 class ScrapeExecutor:
     constant.SEARCH_CITIES = ['Chicago, IL', 'Naperville, IL', 'Oak Lawn, IL', 'Des Plaines, IL']
+    constant.SEARCH_CITIES_IHIRE = ['Schaumburg, IL', 'Chicago, IL', 'Naperille, IL', 'Evanston, IL']
     constant.SEARCH_ROLES = [ 'Dentist Associate', 'Registered Dental Hygienist',
                                 'Dental Office Manager', 'Dental Assistant', 'Dental Front Office']
     constant.WEBSITES = {
         'indeed': indeed_scraper.IndeedWebScraper,
-        'dentalpost': dentalpost_selenium.DentalPostScraper }
+        'dentalpost': dentalpost_selenium.DentalPostScraper,
+        'ihire': ihire_selenium.iHireScraper }
     constant.results_path = '../results/output.csv'
 
     def  __init__(self, site):
         self.address_searcher = address_search.AddressSearcher()
         self.role_data = {}
-        self.site = site
         if not os.path.exists('../results'):
             os.mkdir('../results')
         # REFACTOR THIS WHEN WE HAVE MULTIPLE SITES
@@ -27,8 +31,11 @@ class ScrapeExecutor:
         scraper = constant.WEBSITES[self.site]()
         all_infos = set()
         for role in constant.SEARCH_ROLES:
+            if (self.site == 'dentalpost'
+                    or self.site == 'ihire') and role == 'Dental Front Office':
+                continue
             roles = set()
-            for city in constant.SEARCH_CITIES:
+            for city in (constant.SEARCH_CITIES_IHIRE if self.site == 'ihire' else self.SEARCH_CITIES):
                 scraped_info = scraper.do_scrape(role, city)
                 scraped_info = set(scraped_info)
                 roles = roles.union(scraped_info)
@@ -40,9 +47,17 @@ class ScrapeExecutor:
             print("Number of new unique elements found for role: "+role, len(all_infos)-prev_length)
             # break
         if scraper.uses_driver():
-            scraper.end_driver()
+            SeleniumCommon.end_driver(scraper._driver)
         for info in all_infos:
-            print(info.search_string)
+            print(info.company_name, info.company_loc, 'search_string:', info.search_string)
+        print()
+        print('looking at role data:')
+        for role in self.role_data:
+            role_set = self.role_data[role]
+            print('looking at role data for role', role)
+            print('length of role_set:', len(role_set))
+            for r in role_set:
+                print(r.company_name, r.company_loc, r.search_string)
         print("Total number of unique elements found in the search: ", len(all_infos))
         return all_infos
 
@@ -53,10 +68,13 @@ class ScrapeExecutor:
             # add name, roles, formatted address
             if info.search_string not in address_dict:
                 continue
-            roles_for_info = [ role for role in constant.SEARCH_ROLES if role in self.role_data and info in self.role_data[role] ]
+            roles_for_info = [ role
+                for role in constant.SEARCH_ROLES
+                if role in self.role_data and info in self.role_data[role] ]
             roles_str = '+'.join(roles_for_info)
+            print(info.search_string, roles_for_info, roles_str)
             parsed_addr = self.parse_formatted_address(address_dict[info.search_string])
-            csv_entry = [info.company_name, roles_str] + parsed_addr
+            csv_entry = [info.company_name, roles_str] + parsed_addr + [self.site]
             csv_output.append(csv_entry)
         return csv_output
 
@@ -67,6 +85,8 @@ class ScrapeExecutor:
         street = components[0]
         # split IL 60559 into [IL, 60559]
         state_zip = components[2].split(' ')
+        if len(state_zip) == 1:
+            state_zip.append('missing zip')
         city_state = components[1]+' '+state_zip[0]
         return [street, city_state, state_zip[1]]
 
@@ -91,7 +111,8 @@ class ScrapeExecutor:
             print(failed_searches)
         return address_dict
 
-    def execute(self):
+    def execute(self, site):
+        self.site = site
         all_infos = self.scrape()
         address_dict = self.search_infos(all_infos)
         csv_output = self.get_csv_output(all_infos, address_dict)
@@ -99,5 +120,17 @@ class ScrapeExecutor:
         self.after_run(csv_output)
 
 if __name__ == '__main__':
-    executor = ScrapeExecutor('dentalpost')
-    all_infos = executor.execute()
+    args = sys.argv[1:]
+    if not args:
+        print("Missing parameter for which websites to use")
+        return
+    accepted_params = ['indeed', 'dentalpost', 'ihire', 'all']
+    if any([arg not in accepted_params for arg in args]):
+        print("Unknown parameter found. Fix the parameters")
+        return
+    sites = args
+    if args[0] == 'all':
+        sites = ['indeed', 'dentalpost', 'ihire']
+    for site in sites:
+        executor = ScrapeExecutor()
+        executor.execute(site)

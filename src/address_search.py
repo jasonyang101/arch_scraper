@@ -48,6 +48,8 @@ class AddressSearcher:
         search_output = {}
         failed_searches = []
         for search in self.search_strings:
+            if search in search_output or search in failed_searches:
+                continue
             find_place_url = self.construct_url(search)
             print('querying from', find_place_url)
             r = requests.get(find_place_url)

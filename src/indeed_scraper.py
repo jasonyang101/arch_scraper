@@ -2,15 +2,10 @@ import urllib
 from urllib.request import urlopen
 from bs4 import BeautifulSoup
 from time import sleep
+from website_parser_common import SearchData
 import website_parser_common
 import random
 import constant
-
-class IndeedSearchData:
-    def __init__(self, company_name, company_loc, search_string):
-        self.company_name = company_name
-        self.company_loc = company_loc
-        self.search_string = search_string
 
 class IndeedWebScraper(object):
     # specific classes
@@ -48,7 +43,7 @@ class IndeedWebScraper(object):
                 if start_paren_idx != -1:
                     loc = loc[:start_paren_idx]
             search_string = name + ((' '+loc) if loc else '')
-            info = IndeedSearchData(name, loc, search_string)
+            info = SearchData(name, loc, search_string)
             card_data.append(info)
         return card_data
 

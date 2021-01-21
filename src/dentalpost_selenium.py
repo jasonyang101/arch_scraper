@@ -1,14 +1,10 @@
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 from selenium.common.exceptions import NoSuchElementException
+from selenium_driver import SeleniumCommon
+from website_parser_common import SearchData
 from time import sleep
 import constant
-
-class DentalPostSearchData:
-    def __init__(self, company_name, company_loc, search_string):
-        self.company_name = company_name
-        self.company_loc = company_loc
-        self.search_string = search_string
 
 
 class DentalPostScraper(object):
@@ -30,26 +26,12 @@ class DentalPostScraper(object):
     }
 
     def __init__(self):
-        self._driver = None
-        self.get_driver()
-        self.go_to_url(constant.LOGIN_URL)
+        self._driver = SeleniumCommon.get_driver()
+        SeleniumCommon.go_to_url(self._driver, constant.LOGIN_URL)
         self.logged_in = self.perform_login()
 
     def uses_driver(self):
         return True
-
-    def get_driver(self):
-        if self._driver is None:
-            print("Creating webdriver for DentalPost")
-            options = Options()
-            options.headless = True
-            options.add_argument("--window-size=1920,1200")
-            self._driver = webdriver.Chrome(options=options, executable_path=constant.DRIVER_PATH)
-        return self._driver
-
-    def go_to_url(self, url):
-        self._driver.get(url)
-        sleep(10)
 
     def construct_url(self, role, city):
         role_code = constant.role_to_code[role]
@@ -62,10 +44,7 @@ class DentalPostScraper(object):
         password = self._driver.find_element_by_xpath("//input[@name='password']").send_keys(constant.CREDENTIALS['password'])
         submit = self._driver.find_element_by_xpath("//button[@type='submit']").click()
         sleep(10)
-        try:
-            self._driver.find_element_by_xpath("//div[@class='dropdown-menu']")
-        except NoSuchElementException as e:
-            success = False
+        success, _ = SeleniumCommon.contains_element_xpath(self._driver, "//div[@class='dropdown-menu']")
         login_msg = "Successfully logged into DentalPost" if success else  "Failed to login"
         print(login_msg)
         return success
@@ -95,10 +74,6 @@ class DentalPostScraper(object):
             location = location[:start_paren_idx]
         return ', '.join([name, location])
 
-    def end_driver(self):
-        print("closing DentalPost driver")
-        self._driver.quit()
-
     def do_scrape(self, role, location):
         if role == 'Dental Front Office':
             print('Dental Front Office and Dental Office Manager are combined on DentalPost')
@@ -108,7 +83,7 @@ class DentalPostScraper(object):
         print('')
         print("Starting scrape now")
         url = self.construct_url(role, location)
-        self.go_to_url(url)
+        SeleniumCommon.go_to_url(self._driver, url)
         print('searching this url for new info: ', url)
         found_infos = self.parse_current_search_page()
         all_infos = []
@@ -116,7 +91,7 @@ class DentalPostScraper(object):
         for info in found_infos:
             c = self.convert_output(info[0], info[1])
             add_to = all_infos if c else failed_searches
-            added = DentalPostSearchData(info[0], info[1], c) if c else info[0]+', '+info[1]
+            added = SearchData(info[0], info[1], c) if c else info[0]+', '+info[1]
             add_to.append(added)
         if failed_searches:
             print('failed searches (not in Illinois):')
@@ -126,9 +101,7 @@ class DentalPostScraper(object):
         for info in all_infos:
             print(info.company_name, info.company_loc, info.search_string)
         return all_infos
-
-
-
+# 
 # scraper = DentalPostScraper()
-# out = scraper.do_scrape('Dental Associate', 'Chicago, IL')
+# out = scraper.do_scrape('Dentist Associate', 'Chicago, IL')
 # print(len(out))
