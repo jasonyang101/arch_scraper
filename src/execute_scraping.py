@@ -17,8 +17,9 @@ class ScrapeExecutor:
         'dentalpost': dentalpost_selenium.DentalPostScraper,
         'ihire': ihire_selenium.iHireScraper }
     constant.results_path = '../results/output.csv'
+    constant.stats_path = '../results/stats.txt'
 
-    def  __init__(self, site):
+    def  __init__(self):
         self.address_searcher = address_search.AddressSearcher()
         self.role_data = {}
         if not os.path.exists('../results'):
@@ -26,6 +27,8 @@ class ScrapeExecutor:
         # REFACTOR THIS WHEN WE HAVE MULTIPLE SITES
         if os.path.exists('../results/output.csv'):
             os.remove('../results/output.csv')
+        if os.path.exists('../results/stats.txt'):
+            os.remove('../results/stats.txt')
 
     def scrape(self):
         scraper = constant.WEBSITES[self.site]()
@@ -43,22 +46,11 @@ class ScrapeExecutor:
             prev_length = len(all_infos)
             self.role_data[role] = roles
             all_infos = all_infos.union(roles)
-            print("Total unique entries found for role: "+role, len(roles))
-            print("Number of new unique elements found for role: "+role, len(all_infos)-prev_length)
+            print("Total entries found for role: "+role, len(roles))
+            print("Number of new (unique) job entries added in for role: "+role, len(all_infos)-prev_length)
             # break
         if scraper.uses_driver():
             SeleniumCommon.end_driver(scraper._driver)
-        for info in all_infos:
-            print(info.company_name, info.company_loc, 'search_string:', info.search_string)
-        print()
-        print('looking at role data:')
-        for role in self.role_data:
-            role_set = self.role_data[role]
-            print('looking at role data for role', role)
-            print('length of role_set:', len(role_set))
-            for r in role_set:
-                print(r.company_name, r.company_loc, r.search_string)
-        print("Total number of unique elements found in the search: ", len(all_infos))
         return all_infos
 
     # pass in infos from the scrape
@@ -72,7 +64,6 @@ class ScrapeExecutor:
                 for role in constant.SEARCH_ROLES
                 if role in self.role_data and info in self.role_data[role] ]
             roles_str = '+'.join(roles_for_info)
-            print(info.search_string, roles_for_info, roles_str)
             parsed_addr = self.parse_formatted_address(address_dict[info.search_string])
             csv_entry = [info.company_name, roles_str] + parsed_addr + [self.site]
             csv_output.append(csv_entry)
@@ -90,17 +81,34 @@ class ScrapeExecutor:
         city_state = components[1]+' '+state_zip[0]
         return [street, city_state, state_zip[1]]
 
-    def write_data(self, csv_output):
+    def write_results(self, csv_output):
         m = 'a' if os.path.exists(constant.results_path) else 'w'
         with open(constant.results_path, m) as f:
             for data in csv_output:
                 data = map(lambda s: s.replace(',', '').strip(), data)
                 data_str = ', '.join(data) + '\n'
                 f.write(data_str)
+        return
+        
+    def write_stats(self, num_entries):
+        m = 'a' if os.path.exists(constant.stats_path) else 'w'
+        header = "Statistics for site {site}:".format(site=self.site)
+        entries_str = "Total number of unique entries: {num_entries}".format(num_entries=num_entries)
+        role_data_str = "For the role {role}, found this number of job entries {entries}"
+        role_strs = [ role_data_str.format(role=role, entries=len(self.role_data[role]))
+                        for role in self.role_data ]
+        write_data = [header, entries_str] + role_strs
+        with open(constant.stats_path, m) as f:
+            for d in write_data:
+                d = d+'\n'
+                f.write(d)
+            f.write('\n')
+        return
 
-    def after_run(self, csv_output):
+    def after_run(self, num_entries):
         print("Successfully written data output to results/output.csv")
-        print("Total number of written entries:", len(csv_output))
+        print("Successfully written stat output to results/stats.txt")
+        print("Total number of written entries:", num_entries)
 
     def search_infos(self, search_infos):
         search_strings = [ info.search_string for info in search_infos ]
@@ -116,18 +124,20 @@ class ScrapeExecutor:
         all_infos = self.scrape()
         address_dict = self.search_infos(all_infos)
         csv_output = self.get_csv_output(all_infos, address_dict)
-        self.write_data(csv_output)
-        self.after_run(csv_output)
+        num_entries = len(csv_output)
+        self.write_results(csv_output)
+        self.write_stats(num_entries)
+        self.after_run(num_entries)
 
 if __name__ == '__main__':
     args = sys.argv[1:]
     if not args:
         print("Missing parameter for which websites to use")
-        return
+        exit()
     accepted_params = ['indeed', 'dentalpost', 'ihire', 'all']
     if any([arg not in accepted_params for arg in args]):
         print("Unknown parameter found. Fix the parameters")
-        return
+        exit()
     sites = args
     if args[0] == 'all':
         sites = ['indeed', 'dentalpost', 'ihire']

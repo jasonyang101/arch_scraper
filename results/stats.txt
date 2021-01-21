@@ -1,0 +1,6 @@
+Statistics for site ihire:
+Total number of unique entries: 77
+For the role Dentist Associate, found this number of job entries 17
+For the role Registered Dental Hygienist, found this number of job entries 24
+For the role Dental Office Manager, found this number of job entries 23
+For the role Dental Assistant, found this number of job entries 29

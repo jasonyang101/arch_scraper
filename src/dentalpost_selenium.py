@@ -101,7 +101,7 @@ class DentalPostScraper(object):
         for info in all_infos:
             print(info.company_name, info.company_loc, info.search_string)
         return all_infos
-# 
+#
 # scraper = DentalPostScraper()
 # out = scraper.do_scrape('Dentist Associate', 'Chicago, IL')
 # print(len(out))

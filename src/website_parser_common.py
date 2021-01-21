@@ -16,7 +16,7 @@ class SearchData:
             return False
         return self.company_name == other.company_name and \
                 self.company_loc == other.company_loc and self.search_string == other.search_string
-                
+
 class WebsiteParser:
     def get_soup_for_url(self, url):
         try:
