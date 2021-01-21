@@ -84,12 +84,16 @@ class ScrapeExecutor:
     def write_results(self, csv_output):
         m = 'a' if os.path.exists(constant.results_path) else 'w'
         with open(constant.results_path, m) as f:
+            if m == 'w':
+                headers = ['company_name', 'role', 'address', 'city state', 'zip', 'source website']
+                headers_str = ', '.join(headers) + '\n'
+                f.write(headers_str)
             for data in csv_output:
                 data = map(lambda s: s.replace(',', '').strip(), data)
                 data_str = ', '.join(data) + '\n'
                 f.write(data_str)
         return
-        
+
     def write_stats(self, num_entries):
         m = 'a' if os.path.exists(constant.stats_path) else 'w'
         header = "Statistics for site {site}:".format(site=self.site)
