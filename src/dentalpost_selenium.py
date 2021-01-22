@@ -10,8 +10,6 @@ import constant
 class DentalPostScraper(object):
     constant.DRIVER_PATH = '/Users/jasonyang/Documents/personal/arch_dental/arch_scraper/chromedriver'
     constant.CREDENTIALS = { 'username': 'jyang223@illinois.edu', 'password': 'wheezersucks' }
-    constant.LOGIN_URL = 'http://www.dentalpost.net/dental-jobs/login/'
-    constant.BASE_URL = 'http://www.dentalpost.net/app/search-jobs/'
 
     constant.role_to_code = {
         'Dentist Associate': 'DD', 'Registered Dental Hygienist': 'DH',
@@ -26,8 +24,10 @@ class DentalPostScraper(object):
     }
 
     def __init__(self):
+        self.BASE_URL = 'http://www.dentalpost.net/app/search-jobs/'
+        self.LOGIN_URL = 'http://www.dentalpost.net/dental-jobs/login/'
         self._driver = SeleniumCommon.get_driver()
-        SeleniumCommon.go_to_url(self._driver, constant.LOGIN_URL)
+        SeleniumCommon.go_to_url(self._driver, self.LOGIN_URL)
         self.logged_in = self.perform_login()
 
     def uses_driver(self):
@@ -36,7 +36,7 @@ class DentalPostScraper(object):
     def construct_url(self, role, city):
         role_code = constant.role_to_code[role]
         zip_code = constant.city_to_zip[city]
-        return constant.BASE_URL+role_code+'/'+zip_code
+        return self.BASE_URL+role_code+'/'+zip_code
 
     def perform_login(self):
         success = True

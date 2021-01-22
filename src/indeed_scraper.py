@@ -16,8 +16,6 @@ class IndeedWebScraper(object):
 
     def __init__(self):
         print('starting a new scraper for indeed')
-        self.role = role
-        self.location = location
         self.parser = website_parser_common.WebsiteParser()
 
     def uses_driver(self):
@@ -63,10 +61,12 @@ class IndeedWebScraper(object):
         while not finished:
             finished = True
             start_param = iteration*constant.NUM_PER_PAGE
+            url = base_url
             if start_param:
-                url = base_url+"&start="+str(start_param)
+                url += "&start="+str(start_param)
             page_cards = self.get_cards_per_page(url)
             new_info = self.parse_company_cards(page_cards)
+            print()
             print('searching this url for new info: ', url)
             count = 0
             for info in new_info:

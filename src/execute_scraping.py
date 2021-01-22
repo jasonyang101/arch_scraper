@@ -9,7 +9,7 @@ import os
 
 class ScrapeExecutor:
     constant.SEARCH_CITIES = ['Chicago, IL', 'Naperville, IL', 'Oak Lawn, IL', 'Des Plaines, IL']
-    constant.SEARCH_CITIES_IHIRE = ['Schaumburg, IL', 'Chicago, IL', 'Naperille, IL', 'Evanston, IL']
+    constant.SEARCH_CITIES_IHIRE = ['Schaumburg, IL', 'Chicago, IL', 'Naperville, IL', 'Evanston, IL']
     constant.SEARCH_ROLES = [ 'Dentist Associate', 'Registered Dental Hygienist',
                                 'Dental Office Manager', 'Dental Assistant', 'Dental Front Office']
     constant.WEBSITES = {
@@ -38,7 +38,7 @@ class ScrapeExecutor:
                     or self.site == 'ihire') and role == 'Dental Front Office':
                 continue
             roles = set()
-            for city in (constant.SEARCH_CITIES_IHIRE if self.site == 'ihire' else self.SEARCH_CITIES):
+            for city in (constant.SEARCH_CITIES_IHIRE if self.site == 'ihire' else constant.SEARCH_CITIES):
                 scraped_info = scraper.do_scrape(role, city)
                 scraped_info = set(scraped_info)
                 roles = roles.union(scraped_info)
@@ -96,7 +96,7 @@ class ScrapeExecutor:
 
     def write_stats(self, num_entries):
         m = 'a' if os.path.exists(constant.stats_path) else 'w'
-        header = "Statistics for site {site}:".format(site=self.site)
+        header = "Statistics for site - {site}:".format(site=self.site)
         entries_str = "Total number of unique entries: {num_entries}".format(num_entries=num_entries)
         role_data_str = "For the role {role}, found this number of job entries {entries}"
         role_strs = [ role_data_str.format(role=role, entries=len(self.role_data[role]))

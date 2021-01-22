@@ -29,9 +29,6 @@ import constant
 class iHireScraper(object):
     constant.DRIVER_PATH = '/Users/jasonyang/Documents/personal/arch_dental/arch_scraper/chromedriver'
     constant.CREDENTIALS = { 'username': 'jyang223@illinois.edu', 'password': 'wheezersucks' }
-    constant.LOGIN_URL = 'https://www.ihiredental.com/jobseeker/account/signin?redir=%2Fcareeradvice'
-    constant.BASE_URL = "https://www.ihiredental.com/candidate/jobs/search/?ct=0&d=25&loc={location}#!/search/c=&k=&loc={location}&p={page}&o=14&d=25&st=page&ct={job_code}"
-
     constant.role_to_code = {
         'Dentist Associate': '242', 'Registered Dental Hygienist': '254',
         'Dental Office Manager': '245', 'Dental Assistant': '253'
@@ -40,8 +37,10 @@ class iHireScraper(object):
 
     def __init__(self):
         print("Creating webdriver for iHire")
+        self.LOGIN_URL = 'https://www.ihiredental.com/jobseeker/account/signin?redir=%2Fcareeradvice'
+        self.BASE_URL = "https://www.ihiredental.com/candidate/jobs/search/?ct=0&d=25&loc={location}#!/search/c=&k=&loc={location}&p={page}&o=14&d=25&st=page&ct={job_code}"
         self._driver = SeleniumCommon.get_driver()
-        SeleniumCommon.go_to_url(self._driver, constant.LOGIN_URL)
+        SeleniumCommon.go_to_url(self._driver, self.LOGIN_URL)
         self.logged_in = self.perform_login()
 
     def uses_driver(self):
@@ -70,7 +69,7 @@ class iHireScraper(object):
     def construct_url(self, role, city, page_num):
         code = constant.role_to_code[role]
         loc = urllib.parse.quote(city)
-        return constant.BASE_URL.format(location=loc, page=str(page_num), job_code=code)
+        return self.BASE_URL.format(location=loc, page=str(page_num), job_code=code)
 
     def parse_current_search_page_table(self, page_num):
         print('parsing for tables')
