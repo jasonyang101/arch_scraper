@@ -9,8 +9,11 @@ import sys
 import os
 
 class ScrapeExecutor:
-    constant.SEARCH_CITIES = ['Chicago, IL', 'Naperville, IL', 'Oak Lawn, IL', 'Des Plaines, IL']
-    constant.SEARCH_CITIES_IHIRE = ['Schaumburg, IL', 'Chicago, IL', 'Naperville, IL', 'Evanston, IL']
+    constant.SEARCH_CITIES = {
+        'indeed': ['Chicago, IL', 'Naperville, IL', 'Oak Lawn, IL', 'Des Plaines, IL'],
+        'dentalpost': ['Chicago, IL', 'Naperville, IL', 'Oak Lawn, IL', 'Des Plaines, IL'],
+        'ihire': ['Schaumburg, IL', 'Chicago, IL', 'Naperville, IL', 'Evanston, IL']
+    }
     constant.SEARCH_ROLES = [ 'Dentist Associate', 'Registered Dental Hygienist',
                                 'Dental Office Manager', 'Dental Assistant', 'Dental Front Office']
     constant.WEBSITES = {
@@ -40,7 +43,7 @@ class ScrapeExecutor:
                     or self.site == 'ihire') and role == 'Dental Front Office':
                 continue
             roles = set()
-            for city in (constant.SEARCH_CITIES_IHIRE if self.site == 'ihire' else constant.SEARCH_CITIES):
+            for city in constant.SEARCH_CITIES[self.site]:
                 scraped_info = scraper.do_scrape(role, city)
                 scraped_info = set(scraped_info)
                 filtered_info = self.filter_excluded_info(scraped_info)
