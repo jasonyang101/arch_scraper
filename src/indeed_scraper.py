@@ -83,7 +83,7 @@ class IndeedWebScraper(object):
             if finished and fails > 0:
                 fails -= 1
                 finished = not finished
-            sleep(random.randint(3,10))
+            sleep(random.randint(4,10))
         return all_infos
 
 # url = "https://www.indeed.com/jobs?q=Dentist+Associate&l=Chicago%2C+IL"

@@ -1,7 +1,8 @@
 from selenium_driver import SeleniumCommon
-import indeed_scraper
+from website_parser_common import WebsiteParser
 import dentalpost_selenium
 import ihire_selenium
+import indeed_scraper
 import address_search
 import constant
 import sys
@@ -18,6 +19,7 @@ class ScrapeExecutor:
         'ihire': ihire_selenium.iHireScraper }
     constant.results_path = '../results/output.csv'
     constant.stats_path = '../results/stats.txt'
+    constant.failures_path = '../results/failed_searches.txt'
 
     def  __init__(self):
         self.address_searcher = address_search.AddressSearcher()
@@ -41,7 +43,8 @@ class ScrapeExecutor:
             for city in (constant.SEARCH_CITIES_IHIRE if self.site == 'ihire' else constant.SEARCH_CITIES):
                 scraped_info = scraper.do_scrape(role, city)
                 scraped_info = set(scraped_info)
-                roles = roles.union(scraped_info)
+                filtered_info = self.filter_excluded_info(scraped_info)
+                roles = roles.union(filtered_info)
                 # break
             prev_length = len(all_infos)
             self.role_data[role] = roles
@@ -69,6 +72,15 @@ class ScrapeExecutor:
             csv_output.append(csv_entry)
         return csv_output
 
+    def filter_excluded_info(self, infos):
+        remove_set = set()
+        for info in infos:
+            lower_name = info.company_name.lower()
+            excluded = [ excl for excl in WebsiteParser.EXCLUSIONS if excl in lower_name ]
+            if excluded:
+                remove_set.add(info)
+        return infos - remove_set
+
     # example: 519 N Cass Ave Ste 401, Westmont, IL 60559, United States
     def parse_formatted_address(self, addr):
         addr_split = addr.split(',')
@@ -82,17 +94,14 @@ class ScrapeExecutor:
         return [street, city_state, state_zip[1]]
 
     def write_results(self, csv_output):
-        m = 'a' if os.path.exists(constant.results_path) else 'w'
-        with open(constant.results_path, m) as f:
-            if m == 'w':
-                headers = ['company_name', 'role', 'address', 'city state', 'zip', 'source website']
-                headers_str = ', '.join(headers) + '\n'
-                f.write(headers_str)
-            for data in csv_output:
-                data = map(lambda s: s.replace(',', '').strip(), data)
-                data_str = ', '.join(data) + '\n'
-                f.write(data_str)
-        return
+        headers = ['company_name', 'role', 'address', 'city state', 'zip', 'source website']
+        headers_str = ', '.join(headers)
+        write_data = [headers_str]
+        for data in csv_output:
+            data = map(lambda s: s.replace(',', '').strip(), data)
+            data_str = ', '.join(data)
+            write_data.append(data_str)
+        self.write_data_to_file(constant.results_path, write_data)
 
     def write_stats(self, num_entries):
         m = 'a' if os.path.exists(constant.stats_path) else 'w'
@@ -102,11 +111,21 @@ class ScrapeExecutor:
         role_strs = [ role_data_str.format(role=role, entries=len(self.role_data[role]))
                         for role in self.role_data ]
         write_data = [header, entries_str] + role_strs
-        with open(constant.stats_path, m) as f:
+        self.write_data_to_file(constant.stats_path, write_data)
+
+    def write_failed_info(self, failed_searches):
+        failure_header_str = "For {site}, Google maps search failed to find the address for these companies".format(site=self.site)
+        write_data = [failure_header_str] + failed_searches
+        self.write_data_to_file(constant.failures_path, write_data)
+
+    def write_data_to_file(self, file_path, write_data):
+        m = 'a' if os.path.exists(file_path) else 'w'
+        with open(file_path, m) as f:
             for d in write_data:
                 d = d+'\n'
                 f.write(d)
-            f.write('\n')
+            if file_path != constant.results_path:
+                f.write('\n')
         return
 
     def after_run(self, num_entries):
@@ -121,6 +140,7 @@ class ScrapeExecutor:
         if failed_searches:
             print("Unable to find maps information for these addresses: ")
             print(failed_searches)
+            self.write_failed_info(failed_searches)
         return address_dict
 
     def execute(self, site):
@@ -145,6 +165,6 @@ if __name__ == '__main__':
     sites = args
     if args[0] == 'all':
         sites = ['indeed', 'dentalpost', 'ihire']
+    executor = ScrapeExecutor()
     for site in sites:
-        executor = ScrapeExecutor()
         executor.execute(site)

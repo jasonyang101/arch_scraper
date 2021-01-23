@@ -27,9 +27,16 @@ class DentalPostScraper(object):
         self.BASE_URL = 'http://www.dentalpost.net/app/search-jobs/'
         self.LOGIN_URL = 'http://www.dentalpost.net/dental-jobs/login/'
         self._driver = SeleniumCommon.get_driver()
-        SeleniumCommon.go_to_url(self._driver, self.LOGIN_URL)
-        self.logged_in = self.perform_login()
-
+        self.logged_in, count = False, 0
+        while count < 3:
+            SeleniumCommon.go_to_url(self._driver, self.LOGIN_URL)
+            self.logged_in = self.perform_login()
+            if self.logged_in: break
+            print("Retrying login..")
+            sleep(5)
+            count += 1
+        if count == 3:
+            print("login failed!")
     def uses_driver(self):
         return True
 

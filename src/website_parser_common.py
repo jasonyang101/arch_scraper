@@ -18,6 +18,8 @@ class SearchData:
                 self.company_loc == other.company_loc and self.search_string == other.search_string
 
 class WebsiteParser:
+    EXCLUSIONS = ['aspen', 'united dental', 'destiny dental', 'webster dental', 'confidential']
+
     def get_soup_for_url(self, url):
         try:
             page = urlopen(url)

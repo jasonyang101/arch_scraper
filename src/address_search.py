@@ -67,9 +67,7 @@ class AddressSearcher:
             search_output[search] = addr
         return (search_output, failed_searches)
 
-
-
-
+# SAMPLE EXECUTION
 # find_place_url = construct_url('Healthy Smiles of La Grange La Grange, IL 60525')
 # sample = "A to Z Dental, LLC Cicero, IL"
 # address_search = AddressSearcher([sample])

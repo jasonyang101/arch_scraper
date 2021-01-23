@@ -7,7 +7,7 @@ from time import sleep
 import urllib
 import constant
 
-# Sample URL
+# SAMPLE URLS:
 # 'https://www.ihiredental.com/search?City=Chicago&State=IL&ctname=Dental%20Assistant&ct=253&loc=Chicago%2C%20IL&IsFromSerp=True&CareerTitleIds=253#!/search/c=&k=&loc=Chicago,%20IL&p=2&o=14&d=25&st=page&ct=253'
 # Chicago, IL
 # Naperville, IL
@@ -29,19 +29,27 @@ import constant
 class iHireScraper(object):
     constant.DRIVER_PATH = '/Users/jasonyang/Documents/personal/arch_dental/arch_scraper/chromedriver'
     constant.CREDENTIALS = { 'username': 'jyang223@illinois.edu', 'password': 'wheezersucks' }
+
     constant.role_to_code = {
         'Dentist Associate': '242', 'Registered Dental Hygienist': '254',
         'Dental Office Manager': '245', 'Dental Assistant': '253'
     }
-
 
     def __init__(self):
         print("Creating webdriver for iHire")
         self.LOGIN_URL = 'https://www.ihiredental.com/jobseeker/account/signin?redir=%2Fcareeradvice'
         self.BASE_URL = "https://www.ihiredental.com/candidate/jobs/search/?ct=0&d=25&loc={location}#!/search/c=&k=&loc={location}&p={page}&o=14&d=25&st=page&ct={job_code}"
         self._driver = SeleniumCommon.get_driver()
-        SeleniumCommon.go_to_url(self._driver, self.LOGIN_URL)
-        self.logged_in = self.perform_login()
+        self.logged_in, count = False, 0
+        while count < 3:
+            SeleniumCommon.go_to_url(self._driver, self.LOGIN_URL)
+            self.logged_in = self.perform_login()
+            if self.logged_in: break
+            print("Retrying login..")
+            sleep(5)
+            count += 1
+        if count == 3:
+            print("login failed!")
 
     def uses_driver(self):
         return True
@@ -164,6 +172,7 @@ class iHireScraper(object):
             print(out.search_string)
         return output
 
+# SAMPLE EXECUTION:
 # scraper = iHireScraper()
 # cities = ['Schaumburg, IL', 'Chicago, IL', 'Naperville, IL', 'Evanston, IL']
 # roles = ['Dentist Associate', 'Registered Dental Hygienist', 'Dental Office Manager', 'Dental Assistant']
