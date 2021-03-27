@@ -28,7 +28,7 @@ import constant
 
 class iHireScraper(object):
     constant.DRIVER_PATH = '/Users/jasonyang/Documents/personal/arch_dental/arch_scraper/chromedriver'
-    constant.CREDENTIALS = { 'username': 'jyang223@illinois.edu', 'password': 'wheezersucks' }
+    constant.CREDENTIALS = { 'username': 'jyang223@illinois.edu', 'password': '***********' }
 
     constant.role_to_code = {
         'Dentist Associate': '242', 'Registered Dental Hygienist': '254',
