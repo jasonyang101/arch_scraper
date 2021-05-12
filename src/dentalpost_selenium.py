@@ -2,6 +2,7 @@ from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 from selenium.common.exceptions import NoSuchElementException
 from selenium_driver import SeleniumCommon
+from webdriver_manager.chrome import ChromeDriverManager
 from website_parser_common import SearchData
 from time import sleep
 import constant
@@ -26,7 +27,7 @@ class DentalPostScraper(object):
     def __init__(self):
         self.BASE_URL = 'http://www.dentalpost.net/app/search-jobs/'
         self.LOGIN_URL = 'http://www.dentalpost.net/dental-jobs/login/'
-        self._driver = SeleniumCommon.get_driver()
+        self._driver = webdriver.Chrome(ChromeDriverManager().install())
         self.logged_in, count = False, 0
         while count < 3:
             SeleniumCommon.go_to_url(self._driver, self.LOGIN_URL)

@@ -2,6 +2,7 @@ from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 from selenium.common.exceptions import NoSuchElementException
 from selenium_driver import SeleniumCommon
+from webdriver_manager.chrome import ChromeDriverManager
 from website_parser_common import SearchData
 from time import sleep
 import urllib
@@ -39,7 +40,7 @@ class iHireScraper(object):
         print("Creating webdriver for iHire")
         self.LOGIN_URL = 'https://www.ihiredental.com/jobseeker/account/signin?redir=%2Fcareeradvice'
         self.BASE_URL = "https://www.ihiredental.com/candidate/jobs/search/?ct=0&d=25&loc={location}#!/search/c=&k=&loc={location}&p={page}&o=14&d=25&st=page&ct={job_code}"
-        self._driver = SeleniumCommon.get_driver()
+        self._driver = webdriver.Chrome(ChromeDriverManager().install())
         self.logged_in, count = False, 0
         while count < 3:
             SeleniumCommon.go_to_url(self._driver, self.LOGIN_URL)
