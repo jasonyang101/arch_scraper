@@ -79,6 +79,9 @@ class ScrapeExecutor:
         remove_set = set()
         for info in infos:
             lower_name = info.company_name.lower()
+            idx = lower_name.find('+')
+            if idx != -1:
+                lower_name = lower_name[:idx]
             excluded = [ excl for excl in WebsiteParser.EXCLUSIONS if excl in lower_name ]
             if excluded:
                 remove_set.add(info)

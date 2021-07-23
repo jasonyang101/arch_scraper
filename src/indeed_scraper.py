@@ -9,9 +9,10 @@ import constant
 
 class IndeedWebScraper(object):
     # specific classes
-    constant.DIV_COMPANY_CARD_CLASS = 'sjcl'
-    constant.LOCATION_CLASS = 'location'
-    constant.COMPANY_CLASS = 'company'
+    # Deprecated: constant.DIV_COMPANY_CARD_CLASS = 'sjcl'
+    constant.TABLE_CLASS = 'jobCard_mainContent'
+    constant.LOCATION_CLASS = 'companyLocation'
+    constant.COMPANY_CLASS = 'companyName'
     constant.NUM_PER_PAGE = 10
 
     def __init__(self):
@@ -48,8 +49,10 @@ class IndeedWebScraper(object):
     # get all of the cards from the html file
     def get_cards_per_page(self, url):
         soup = self.parser.get_soup_for_url(url)
-        page_cards = soup.find_all(lambda tag: tag.name == 'div' and
-                                            tag.get('class') == [ constant.DIV_COMPANY_CARD_CLASS ])
+
+        page_cards = soup.find_all(lambda tag: tag.name == 'table' and
+                                            tag.get('class') == [ constant.TABLE_CLASS ])
+        print("Found page_cards - num:", len(page_cards))
         return page_cards
 
     # add to the set until you're done
@@ -87,5 +90,5 @@ class IndeedWebScraper(object):
         return all_infos
 
 # url = "https://www.indeed.com/jobs?q=Dentist+Associate&l=Chicago%2C+IL"
-# web_scraper = IndeedWebScraper('Dental Associate','Chicago, IL')
+# web_scraper = IndeedWebScraper('Dental Associate','Chicago', 'IL')
 # web_scraper.scrape()
